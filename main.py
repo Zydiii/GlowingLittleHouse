@@ -15,11 +15,12 @@ def initialize_voxels():
     # draw_circle(ivec3(10, 0, 0), 10, vec3(1), vec3(0))
     # draw_house(ivec3(0, 0, 0), 8, vec3(1), vec3(0))
     draw_ground()
-    draw_river()
+    draw_river(ivec3(0, -40, -17), 27)
     draw_bridge(ivec3(-10, -40, -45), 10, 20, 8, vec3(38,45,55) / 255, vec3(0))
-    create_tree(ivec3(10, -40, -45), 30, 15, vec3(251,136,203) / 255)
-    create_tree(ivec3(-40, -40, 10), 45, 25, vec3(251,136,203) / 255)
-
+    create_tree(ivec3(10, -40 + 10, -45), 10, vec3(0,109,41) / 255, vec3(174,23,104) / 255)
+    create_tree(ivec3(-40, -40 + 10, 10), 10, vec3(0,109,41) / 255, vec3(174,23,104) / 255)
+    create_tree(ivec3(30, -40 + 10, 20), 10, vec3(0,109,41) / 255, vec3(174,23,104) / 255)
+    create_tree(ivec3(40, -40 + 10, -40), 10, vec3(0,109,41) / 255, vec3(174,23,104) / 255)
 
 # @ti.func
 # def draw_tree():
@@ -33,14 +34,11 @@ def draw_ground():
     create_block(ivec3(-60, -40, -60), ivec3(120, 1, 120), vec3(87,162,33) / 255, vec3(0.01))
 
 @ti.func
-def draw_river():
-    for I in ti.grouped(ti.ndrange((-60, 60), (0, 10))):
-        create_block(ivec3(I[0], -40, ((I[0] - I[1]) / 60) ** 3 * 60), ivec3(1, 1, 1), vec3(100,194,255) / 255, vec3(0.3))
-
-    # for i in range(120):
-    #     create_block(ivec3(-60 + i, -40, -35 + i ** 3), ivec3(1, 1, 1), vec3(100,194,255) / 255, vec3(0.3))
-    # create_block(ivec3(-60, -40, -35), ivec3(120, 1, 37), vec3(100, 194, 255) / 255, vec3(0.3))
-    # create_block(ivec3(60, -60, -35), ivec3(1, 21, 37), vec3(100,194,255) / 255, vec3(0.3))
+def draw_river(centerpos, width):
+    for i in range(-60, 60):
+        width_ran = width + ti.random() * 4
+        create_block(vec3(i + centerpos[0], centerpos[1] - 20, (i / 25)**3-width_ran/2 + centerpos[2]), ivec3(1, 21, width_ran),
+                     vec3(100, 194, 255) / 255, vec3(0.3))
 
 @ti.func
 def draw_step(pos, size, radius, color, color_noise):
@@ -99,14 +97,14 @@ def draw_bridge(pos, length, width, height, color, color_noise):
         create_block(ivec3(pos[0], pos[1] + h, posCenter[2] * 2 + pos[2] - h ** 2 * 0.5), ivec3(width, 1, length), color, color_noise)
 
 @ti.func
-def create_leaves(pos, radius, color):
+def create_tree(pos, radius, color, color1):
     for I in ti.grouped(
             ti.ndrange((-radius, radius), (-radius, radius),
                        (-radius, +radius))):
         f = I / radius
         h = 0.5 - max(f[1], -0.5) * 0.5
         d = vec2(f[0], f[2]).norm()
-        prob = max(0, 1 - d)**2 * h  # xz mask
+        prob = max(0, 1 - d) ** 2 * h  # xz mask
         prob *= h  # y mask
         # noise
         prob += ti.sin(f[0] * 5 + pos[0]) * 0.02
@@ -116,23 +114,8 @@ def create_leaves(pos, radius, color):
             prob = 0.0
         if ti.random() < prob:
             scene.set_voxel(pos + I, 1, color + (ti.random() - 0.5) * 0.2)
-
-
-@ti.func
-def create_tree(pos, height, radius, color):
-    create_block(pos, ivec3(3, height - radius * 0.5, 3), vec3(47,25,45)/255, vec3(0.3))
-
-    # Leaves
-    create_leaves(pos + ivec3(0, height, 0), radius, color)
-
-    # Ground
-    for i, j in ti.ndrange((-radius, radius), (-radius, radius)):
-        prob = max((radius - vec2(i, j).norm()) / radius, 0)
-        prob = prob * prob
-        if ti.random() < prob * prob:
-            scene.set_voxel(pos + ivec3(i, 1, j), 1,
-                            color + ti.random() * vec3(0.1))
-
+        if ti.random() < prob and not I[0] % 5:
+            scene.set_voxel(pos + I, 1, color1 + (ti.random() - 0.5) * 0.2)
 
 initialize_voxels()
 
