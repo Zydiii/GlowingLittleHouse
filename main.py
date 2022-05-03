@@ -3,7 +3,7 @@ import taichi as ti
 from taichi.math import *
 
 scene = Scene(voxel_edges=0, exposure=1.5)
-scene.set_floor(0, (0.8, 1.0, 0.8))
+scene.set_floor(-0.85, (0.8, 1.0, 0.8))
 scene.set_background_color((0.8, 0.89, 1))
 scene.set_directional_light((1, 1, -1), 0.2, (1, 0.8, 0.6))
 
@@ -13,12 +13,26 @@ def initialize_voxels():
     # scene.set_voxel(vec3(0, 0, 0), 2, vec3(0.9, 0.1, 0.1))
     # draw_tree()
     # draw_circle(ivec3(10, 0, 0), 10, vec3(1), vec3(0))
-    draw_house(ivec3(0, 0, 0), 8, vec3(1), vec3(0))
+    # draw_house(ivec3(0, 0, 0), 8, vec3(1), vec3(0))
+    draw_ground()
+    draw_river()
+    draw_bridge(ivec3(-10, -40, -45), 10, 20, 8, vec3(38,45,55) / 255, vec3(0))
 
 # @ti.func
 # def draw_tree():
 #     # draw trunk
 #     draw_trunck(ivec3(0, 0, 0), ivec3(10, 20, 10), 4, vec3(0.28, 0.22, 0.17), vec3(0))
+
+@ti.func
+def draw_ground():
+    for i in range(4):
+        create_block(ivec3(-60, -(i + 1)**2 - 40, -60), ivec3(120, 2 * i + 1, 120), vec3(0.5 - i * 0.1) * vec3(94,175,37) / 255, vec3(0.05 * (3 - i)))
+    create_block(ivec3(-60, -40, -60), ivec3(120, 1, 120), vec3(87,162,33) / 255, vec3(0.01))
+
+@ti.func
+def draw_river():
+    create_block(ivec3(-60, -40, -35), ivec3(120, 1, 37), vec3(100,194,255) / 255, vec3(0.3))
+    create_block(ivec3(60, -60, -35), ivec3(1, 21, 37), vec3(100,194,255) / 255, vec3(0.3))
 
 @ti.func
 def draw_step(pos, size, radius, color, color_noise):
@@ -56,6 +70,25 @@ def draw_house(pos, height, color, color_noise):
     draw_roof(pos + ivec3(0, height + 2, 0), height, color, color_noise)
     draw_poles(pos + ivec3(0, 2, 0), height, color, color_noise)
     draw_base(pos, height, color, color_noise)
+
+@ti.func
+def create_block(pos, size, color, color_noise):
+    for I in ti.grouped(
+            ti.ndrange((pos[0], pos[0] + size[0]), (pos[1], pos[1] + size[1]),
+                       (pos[2], pos[2] + size[2]))):
+        scene.set_voxel(I, 1, color + color_noise * ti.random())
+
+@ti.func
+def draw_steps(pos, length, width, height, color, color_noise):
+    create_block(pos, ivec3(width, height, length), color, color_noise)
+
+@ti.func
+def draw_bridge(pos, length, width, height, color, color_noise):
+    for h in ti.ndrange((0, height)):
+        create_block(pos + ivec3(0, h, h ** 2 * 0.5), ivec3(width, 1, length), color, color_noise)
+    posCenter = ivec3(0, height - 1, (height - 1) ** 2 * 0.5)
+    for h in ti.ndrange((0, height)):
+        create_block(ivec3(pos[0], pos[1] + h, posCenter[2] * 2 + pos[2] - h ** 2 * 0.5), ivec3(width, 1, length), color, color_noise)
 
 initialize_voxels()
 
