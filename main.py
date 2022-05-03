@@ -34,8 +34,13 @@ def draw_ground():
 
 @ti.func
 def draw_river():
-    create_block(ivec3(-60, -40, -35), ivec3(120, 1, 37), vec3(100,194,255) / 255, vec3(0.3))
-    create_block(ivec3(60, -60, -35), ivec3(1, 21, 37), vec3(100,194,255) / 255, vec3(0.3))
+    for I in ti.grouped(ti.ndrange((-60, 60), (0, 10))):
+        create_block(ivec3(I[0], -40, ((I[0] - I[1]) / 60) ** 3 * 60), ivec3(1, 1, 1), vec3(100,194,255) / 255, vec3(0.3))
+
+    # for i in range(120):
+    #     create_block(ivec3(-60 + i, -40, -35 + i ** 3), ivec3(1, 1, 1), vec3(100,194,255) / 255, vec3(0.3))
+    # create_block(ivec3(-60, -40, -35), ivec3(120, 1, 37), vec3(100, 194, 255) / 255, vec3(0.3))
+    # create_block(ivec3(60, -60, -35), ivec3(1, 21, 37), vec3(100,194,255) / 255, vec3(0.3))
 
 @ti.func
 def draw_step(pos, size, radius, color, color_noise):
