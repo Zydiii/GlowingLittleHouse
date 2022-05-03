@@ -17,6 +17,9 @@ def initialize_voxels():
     draw_ground()
     draw_river()
     draw_bridge(ivec3(-10, -40, -45), 10, 20, 8, vec3(38,45,55) / 255, vec3(0))
+    create_tree(ivec3(10, -40, -45), 30, 15, vec3(251,136,203) / 255)
+    create_tree(ivec3(-40, -40, 10), 45, 25, vec3(251,136,203) / 255)
+
 
 # @ti.func
 # def draw_tree():
@@ -89,6 +92,42 @@ def draw_bridge(pos, length, width, height, color, color_noise):
     posCenter = ivec3(0, height - 1, (height - 1) ** 2 * 0.5)
     for h in ti.ndrange((0, height)):
         create_block(ivec3(pos[0], pos[1] + h, posCenter[2] * 2 + pos[2] - h ** 2 * 0.5), ivec3(width, 1, length), color, color_noise)
+
+@ti.func
+def create_leaves(pos, radius, color):
+    for I in ti.grouped(
+            ti.ndrange((-radius, radius), (-radius, radius),
+                       (-radius, +radius))):
+        f = I / radius
+        h = 0.5 - max(f[1], -0.5) * 0.5
+        d = vec2(f[0], f[2]).norm()
+        prob = max(0, 1 - d)**2 * h  # xz mask
+        prob *= h  # y mask
+        # noise
+        prob += ti.sin(f[0] * 5 + pos[0]) * 0.02
+        prob += ti.sin(f[1] * 9 + pos[1]) * 0.01
+        prob += ti.sin(f[2] * 10 + pos[2]) * 0.03
+        if prob < 0.1:
+            prob = 0.0
+        if ti.random() < prob:
+            scene.set_voxel(pos + I, 1, color + (ti.random() - 0.5) * 0.2)
+
+
+@ti.func
+def create_tree(pos, height, radius, color):
+    create_block(pos, ivec3(3, height - radius * 0.5, 3), vec3(47,25,45)/255, vec3(0.3))
+
+    # Leaves
+    create_leaves(pos + ivec3(0, height, 0), radius, color)
+
+    # Ground
+    for i, j in ti.ndrange((-radius, radius), (-radius, radius)):
+        prob = max((radius - vec2(i, j).norm()) / radius, 0)
+        prob = prob * prob
+        if ti.random() < prob * prob:
+            scene.set_voxel(pos + ivec3(i, 1, j), 1,
+                            color + ti.random() * vec3(0.1))
+
 
 initialize_voxels()
 
