@@ -24,7 +24,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((4.0, 4.0, 4.0))
+        self._camera_pos = np.array((2.12358861, 3.39722996, 4.26620757))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -87,6 +87,7 @@ class Camera:
         dir *= 0.05
         self._lookat_pos += dir
         self._camera_pos += dir
+
         return True
 
     @property
