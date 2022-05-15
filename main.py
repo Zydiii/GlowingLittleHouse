@@ -5,7 +5,7 @@ from taichi.math import *
 scene = Scene(voxel_edges=0, exposure=1.0)
 scene.set_floor(-1, (1,1,1))
 scene.set_background_color((0, 0, 0))
-scene.set_directional_light((1.5, 0.5, 1), .1, (54/255/4,23/255/4,45/255/4))
+scene.set_directional_light((1.5, 0.5, 1), .1, (54.0/255, 23.0/255, 45.0/255))
 
 @ti.kernel
 def initialize_voxels():
